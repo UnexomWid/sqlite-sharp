@@ -8,7 +8,7 @@ parameters, executing statements).
 Here's an example:
 
 ```cs
-// Initialize the database
+// Open the database
 SQLite.DB db = new SQLite.DB("database.sqlite");
 
 // Create the statement
@@ -19,11 +19,12 @@ stmt.BindInt(1, 4);
 
 // Execute the statement and receive an array of columns.
 // You can execute a statement multiple times, and bind
-// different values on the same parameter.
+// different values on the same parameter
 SQLite.Column[] result = stmt.Exec();
 
 if(result != null) {
-    // If it's null, query didn't return anything. Otherwise, there is at least one row.
+    // If it's null, the query didn't return anything
+    // Otherwise, there is at least one row
     
     for (int i = 0; i < result.Length; ++i)
     {
@@ -33,7 +34,7 @@ if(result != null) {
         // Column type
         SQLite.Column.Type type = result[i].type;
         
-        // Column values. Make sure to cast those to the correct type:
+        // Column values. Make sure to cast those to the correct type based on the column type:
         // INTEGER -> long
         // FLOAT   -> double
         // TEXT    -> string

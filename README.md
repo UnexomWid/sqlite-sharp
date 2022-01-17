@@ -38,7 +38,8 @@ if(result != null) {
         // INTEGER -> long
         // FLOAT   -> double
         // TEXT    -> string
-        // BLOB    ->byte[]
+        // BLOB    -> byte[]
+        // NULL    -> 'values' is empty in this case, so no cast needed here
         List<object> values = result[i].values;
         
         // Every column will have the same number of values,

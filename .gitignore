@@ -1,0 +1,6 @@
+*
+!src/
+!src/SQLite.cs
+!.gitignore
+!README.md
+!LICENSE

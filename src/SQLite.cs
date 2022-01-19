@@ -423,7 +423,14 @@ namespace SQLite
                                 IntPtr ptr = API.sqlite3_column_text(handle, i);
                                 int size = API.sqlite3_column_bytes(handle, i);
 
-                                result[i].values.Add(Marshal.PtrToStringAnsi(ptr, size));
+                                if(ptr == IntPtr.Zero)
+                                {
+                                    result[i].values.Add(null);
+                                }
+                                else
+                                {
+                                    result[i].values.Add(Marshal.PtrToStringAnsi(ptr, size));
+                                }
                                 break;
                             }
                             case Column.Type.BLOB:
@@ -431,9 +438,15 @@ namespace SQLite
                                 IntPtr ptr = API.sqlite3_column_blob(handle, i);
                                 int size = API.sqlite3_column_bytes(handle, i);
 
-                                result[i].values.Add(new byte[size]);
-
-                                Marshal.Copy(ptr, (byte[]) result[i].values[result[i].values.Count - 1], 0, size);
+                                if (ptr == IntPtr.Zero)
+                                {
+                                    result[i].values.Add(null);
+                                }
+                                else
+                                {
+                                    result[i].values.Add(new byte[size]);
+                                    Marshal.Copy(ptr, (byte[]) result[i].values[result[i].values.Count - 1], 0, size);
+                                }
                                 break;
                             }
                         }

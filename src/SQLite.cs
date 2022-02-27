@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace SQLite
@@ -205,6 +206,8 @@ namespace SQLite
         /// </summary>
         public DB(string file)
         {
+            handle = IntPtr.Zero;
+
             int status = API.sqlite3_open(file, ref handle);
 
             if(status != API.SQLITE_OK)
@@ -221,11 +224,23 @@ namespace SQLite
             return new Statement(handle, query);
         }
 
-        ~DB()
+        public void Destroy()
         {
+            if(handle == IntPtr.Zero)
+            {
+                return;
+            }
+
             // close() can return an error status code, but since it's called from a destructor
             // there's not much we can do
             API.sqlite3_close_v2(handle);
+
+            handle = IntPtr.Zero;
+        }
+
+        ~DB()
+        {
+            Destroy();
         }
 
         /// <summary>
@@ -382,7 +397,7 @@ namespace SQLite
 
                     int type = API.sqlite3_column_type(handle, i);
 
-                    switch(type)
+                    switch (type)
                     {
                         case API.SQLITE_INTEGER:
                             result[i].type = Column.Type.INTEGER;
@@ -406,6 +421,31 @@ namespace SQLite
                 {
                     for(int i = 0; i < columnCount; ++i)
                     {
+                        // If the column is null now, it may not be null in future rows
+                        // Therefore, get the actual type
+                        if(result[i].type == Column.Type.NULL)
+                        {
+                            int type = API.sqlite3_column_type(handle, i);
+
+                            switch (type)
+                            {
+                                case API.SQLITE_INTEGER:
+                                    result[i].type = Column.Type.INTEGER;
+                                    break;
+                                case API.SQLITE_FLOAT:
+                                    result[i].type = Column.Type.FLOAT;
+                                    break;
+                                case API.SQLITE_TEXT:
+                                    result[i].type = Column.Type.TEXT;
+                                    break;
+                                case API.SQLITE_BLOB:
+                                    result[i].type = Column.Type.BLOB;
+                                    break;
+                                case API.SQLITE_NULL:
+                                    break;
+                            }
+                        }
+
                         switch(result[i].type)
                         {
                             case Column.Type.INTEGER:
@@ -449,6 +489,11 @@ namespace SQLite
                                 }
                                 break;
                             }
+                            case Column.Type.NULL:
+                            {
+                                result[i].values.Add(null);
+                                break;
+                            }
                         }
                     }
 
@@ -458,6 +503,15 @@ namespace SQLite
                 if(status != API.SQLITE_DONE)
                 {
                     throw new StatementException(status);
+                }
+
+                for(int i = 0; i < columnCount; ++i)
+                {
+                    // No need to store a list full of nulls
+                    if(result[i].type == Column.Type.NULL)
+                    {
+                        result[i].values.Clear();
+                    }
                 }
 
                 return result;
